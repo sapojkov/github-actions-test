@@ -23,11 +23,19 @@ jobs:
         run: |
           echo '${{ toJSON(vars) }}' > vars.json
 
+      - name: Render secrets as JSON and save to file
+        run: |
+          echo '${{ toJSON(secrets) }}' > secrets.json
+
       - name: Create .env file from vars.json
         run: |
           echo "Creating .env file..."
           # Read the JSON and create .env entries
           jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > .env
+
+      - name: Add secrets to .env file
+        run: |
+          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' secrets.json >> .env
 
       - name: Display .env file contents
         run: |
