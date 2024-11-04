@@ -13,15 +13,25 @@ jobs:
         run: |
           echo "Adding environment variables..."
           for var in ${{ vars }}; do
-            echo "${{ fromJSON(var) }}"
+            echo "var"
           done
 
       - name: Read a Secret
         run: echo "My secret is ${{ secrets.PRODUCTION_SECRET }}"
 
-      - name: Render a vars
+      - name: Render vars as JSON and save to file
         run: |
-          echo "${{ toJSON(vars) }}"
+          echo '${{ toJSON(vars) }}' > vars.json
+
+      - name: Create .env file from vars.json
+        run: |
+          echo "Creating .env file..."
+          # Read the JSON and create .env entries
+          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > .env
+
+      - name: Display .env file contents
+        run: |
+          cat .env
 
       - name: Render secrets
         run: |
