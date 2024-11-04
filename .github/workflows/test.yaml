@@ -1,0 +1,12 @@
+name: Secrets and Environment Variables
+
+on:
+  workflow_dispatch:
+
+jobs:
+  top-env-variables:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Read a Variable
+        run: echo "My environment varuable is ${{ vars.API_URL }}"
