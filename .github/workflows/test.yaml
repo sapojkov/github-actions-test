@@ -6,7 +6,7 @@ on:
 jobs:
   top-env-variables:
     runs-on: ubuntu-latest
-    # environment: Production
+    environment: Production
 
     steps:
       - name: Read a Variable
