@@ -6,7 +6,11 @@ on:
 jobs:
   top-env-variables:
     runs-on: ubuntu-latest
+    # environment: API_URL
 
     steps:
       - name: Read a Variable
         run: echo "My environment varuable is ${{ vars.API_URL }}"
+
+      - name: Read a Secret
+        run: echo "My secret is ${{ secrets.MY_SECRET }}"
