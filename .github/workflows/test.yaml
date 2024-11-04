@@ -6,15 +6,14 @@ on:
 jobs:
   top-env-variables:
     runs-on: ubuntu-latest
-    environment: Production
+    # environment: Production
 
     steps:
       - name: Read a Variable
         run: |
-          export PRODUCTION_VAR=production
           echo "Adding environment variables..."
-          for var in $(printenv); do
-            echo "$var"
+          for var in $(printenv | grep '^API_' | cut -d= -f1); do
+            echo "${var}=$(printenv ${var})"
           done
 
       - name: Read a Secret
