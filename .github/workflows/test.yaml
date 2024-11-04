@@ -21,8 +21,8 @@ jobs:
 
       - name: Render a vars
         run: |
-          echo "${{ "toJSON(vars) }}"
+          echo "${{ toJSON(vars) }}"
 
       - name: Render secrets
         run: |
-          echo "${{ "toJSON(secrets) }}"
+          echo "${{ toJSON(secrets) }}"
