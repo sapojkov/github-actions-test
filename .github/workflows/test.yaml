@@ -13,7 +13,7 @@ jobs:
         run: |
           echo "Adding environment variables..."
           for var in ${{ vars }}; do
-            echo "$var"
+            echo "${var}"
           done
 
       - name: Read a Secret
@@ -22,9 +22,6 @@ jobs:
       - name: Render a vars
         run: |
           echo "${{ toJSON(vars) }}"
-          for var in ${{ toJSON(vars) }}; do
-            echo "$var"
-          done
 
       - name: Render secrets
         run: |
