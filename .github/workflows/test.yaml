@@ -12,6 +12,8 @@ jobs:
       - name: Read a Variable
         run: |
           echo "${{ vars.API_URL }}"
+          echo "${{ vars.PROD_VAR }}"
+          echo "${{ vars.API_URL_URL }}"
 
       - name: Read a Secret
         run: echo "My secret is ${{ secrets.PRODUCTION_SECRET }}"
