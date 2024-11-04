@@ -10,7 +10,12 @@ jobs:
 
     steps:
       - name: Read a Variable
-        run: echo "My environment varuable is ${{ vars.PROD_VAR }}"
+        run: |
+          echo "Adding environment variables..."
+          for var in $(printenv); do
+            echo "$var"
+            echo "${{ vars.var }}"
+          done
 
       - name: Read a Secret
         run: echo "My secret is ${{ secrets.PRODUCTION_SECRET }}"
