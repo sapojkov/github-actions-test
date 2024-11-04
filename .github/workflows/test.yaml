@@ -26,20 +26,41 @@ jobs:
         run: |
           echo '${{ toJSON(secrets) }}' > secrets.json
 
-      - name: Create .env file from vars.json
+      - name: Create files with keys from vars and secrets
         run: |
-          echo "Creating .env file..."
-          # Read the JSON and create .env entries
-          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > .env
+          echo "Creating files with keys..."
 
-      - name: Add secrets to .env file
+          # Create keys.txt file from vars
+          echo '${{ toJSON(vars) }}' | jq -r 'keys[]' > vars_keys.txt
+
+          # Create keys.txt file from secrets
+          echo '${{ toJSON(secrets) }}' | jq -r 'keys[]' > secrets_keys.txt
+
+      - name: Append vars to .env file
         run: |
-          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' secrets.json >> .env
+          echo "Appending vars to .env file..."
+
+          # Check if .env file exists, create if not
+          if [ ! -f .env ]; then
+            echo "Creating .env file..."
+            touch .env
+          fi
+
+          # Loop through keys in vars_keys.txt and append to .env
+          while IFS= read -r key; do
+            echo "${key}=\${{ vars.${key} }}" >> .env
+          done < vars_keys.txt
+
+      - name: Append secrets to .env file
+        run: |
+          echo "Appending secrets to .env file..."
+
+          # Loop through keys in secrets_keys.txt and append to .env
+          while IFS= read -r key; do
+            echo "${key}=\${{ secrets.${key} }}" >> .env
+          done < secrets_keys.txt
 
       - name: Display .env file contents
         run: |
+          echo "Contents of .env file:"
           cat .env
-
-      - name: Render secrets
-        run: |
-          echo "${{ toJSON(secrets) }}"
