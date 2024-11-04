@@ -14,7 +14,6 @@ jobs:
           echo "Adding environment variables..."
           for var in $(printenv); do
             echo "$var"
-            echo "${{ vars.var }}"
           done
 
       - name: Read a Secret
