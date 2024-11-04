@@ -11,10 +11,7 @@ jobs:
     steps:
       - name: Read a Variable
         run: |
-          echo "Adding environment variables..."
-          for var in ${{ vars }}; do
-            echo "var"
-          done
+          echo "${{ vars.API_URL }}"
 
       - name: Read a Secret
         run: echo "My secret is ${{ secrets.PRODUCTION_SECRET }}"
