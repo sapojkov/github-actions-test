@@ -18,3 +18,11 @@ jobs:
 
       - name: Read a Secret
         run: echo "My secret is ${{ secrets.PRODUCTION_SECRET }}"
+
+      - name: Render a vars
+        run: |
+          echo "${{ "toJSON(vars) }}"
+
+      - name: Render secrets
+        run: |
+          echo "${{ "toJSON(secrets) }}"
