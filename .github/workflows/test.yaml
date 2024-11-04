@@ -13,7 +13,7 @@ jobs:
         run: |
           echo "Adding environment variables..."
           for var in ${{ vars }}; do
-            echo "${var}"
+            echo "${{ var }}"
           done
 
       - name: Read a Secret
