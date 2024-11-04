@@ -11,6 +11,7 @@ jobs:
     steps:
       - name: Read a Variable
         run: |
+          export PRODUCTION_VAR=production
           echo "Adding environment variables..."
           for var in $(printenv); do
             echo "$var"
