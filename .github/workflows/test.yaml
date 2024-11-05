@@ -37,24 +37,6 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
 
-      - name: Wait for MariaDB to be ready
-        run: |
-          echo "Waiting for MariaDB to become healthy..."
-          for i in {1..10}; do
-            if docker inspect --format='{{.State.Health.Status}}' ${{ job.services.mariadb.id }} | grep -q "healthy"; then
-              echo "MariaDB is healthy!"
-              break
-            fi
-            echo "MariaDB is not healthy yet. Waiting..."
-            sleep 10
-          done
-
-      - name: Capture MariaDB Logs
-        if: failure() || always()
-        run: |
-          echo "MariaDB container logs:"
-          docker logs ${{ job.services.mariadb.id }}
-
       - name: Apply Django migrations
         env:
           DATABASE_HOST: 127.0.0.1
