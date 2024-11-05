@@ -27,9 +27,9 @@ jobs:
           character set server: 'utf8'
           collation server: 'utf8_general_ci'
           mariadb version: '10.4.10'
-          mysql database: 'my_database'
-          mysql user: 'my_user'
-          mysql password: 'my_password'
+          mysql database: ${{ vars.MY_DATABASE }}
+          mysql user: ${{ vars.MY_USER }}
+          mysql password: ${{ secrets.MYSQL_PASSWORD }}
 
       - name: Install dependencies
         run: |
@@ -47,6 +47,23 @@ jobs:
           source venv/bin/activate
           cd myproject/
           python manage.py migrate
+
+      - name: Generate spectacular schema
+        run: |
+          source venv/bin/activate
+          cd myproject/
+          python manage.py spectacular --file schema.yml --api-version 1.0
+
+      - name: Display spectacular schema
+        run: |
+          cd myproject/
+          cat schema.yml
+
+      - name: Upload OpenAPI schema as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openapi-schema-stage1
+          path: myproject/schema.yaml
 
       - name: Read a Variable
         run: |
