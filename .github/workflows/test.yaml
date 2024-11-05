@@ -63,7 +63,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: openapi-schema-stage1
-          path: myproject/schema.yaml
+          path: myproject/schema.yml
 
       - name: Read a Variable
         run: |
