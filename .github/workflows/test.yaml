@@ -8,7 +8,56 @@ jobs:
     runs-on: ubuntu-latest
     environment: Production
 
+    services:
+      mariadb:
+        image: mariadb:latest
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_DATABASE: my_database
+          MYSQL_USER: my_user
+          MYSQL_PASSWORD: my_password
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+
     steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Wait for MariaDB to be ready
+        run: |
+          until docker inspect --format='{{json .State.Health.Status}}' mariadb | grep -q "healthy"; do
+            echo "Waiting for MariaDB to be ready..."
+            sleep 5
+          done
+
+      - name: Apply Django migrations
+        env:
+          DATABASE_HOST: 127.0.0.1
+          DATABASE_NAME: my_database
+          DATABASE_USER: my_user
+          DATABASE_PASSWORD: my_password
+        run: |
+          source venv/bin/activate
+          cd myproject/
+          python manage.py migrate
+
       - name: Read a Variable
         run: |
           echo "${{ vars.API_URL }}"
