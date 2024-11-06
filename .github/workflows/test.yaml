@@ -25,7 +25,7 @@ jobs:
 
       - name: Display input staging_environment
         run: |
-          cat ${{ inputs.staging_environment }}
+          echo "Selected environment: ${{ inputs.staging_environment }}"
 
       - name: Shutdown Ubuntu MySQL (SUDO)
         run: sudo service mysql stop

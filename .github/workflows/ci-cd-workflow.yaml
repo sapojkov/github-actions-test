@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Display input staging_environment
         run: |
-          cat ${{ inputs.staging_environment }}
+          echo "Selected environment: ${{ inputs.staging_environment }}"
 
   deploy-backend:
     needs: display-staging-environment
