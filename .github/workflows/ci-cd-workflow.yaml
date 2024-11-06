@@ -14,8 +14,15 @@ on:
           - Production
 
 jobs:
+  display-staging-environment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display input staging_environment
+        run: |
+          cat ${{ inputs.staging_environment }}
 
   deploy-backend:
+    needs: display-staging-environment
     uses: ./.github/workflows/test.yaml
     with:
       staging_environment: ${{ inputs.staging_environment }}
