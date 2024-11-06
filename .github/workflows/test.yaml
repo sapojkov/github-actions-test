@@ -88,3 +88,13 @@ jobs:
       - name: Display .env file contents
         run: |
           cat .env
+
+  download-artifacts:
+    needs: top-env-variables
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: openapi-schema-stage1
