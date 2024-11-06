@@ -1,14 +1,14 @@
 name: Secrets and Environment Variables
 
 on:
-  workflow_dispatch:
+#   workflow_dispatch:
 
-#   workflow_call:
-#     inputs:
-#       staging_environment:
-#         description: "The environment for deployment (e.g., staging, production)"
-#         required: true
-#         type: string
+  workflow_call:
+    inputs:
+      staging_environment:
+        description: "The environment for deployment (e.g., staging, production)"
+        required: true
+        type: string
 
 jobs:
   top-env-variables:
