@@ -25,23 +25,10 @@ jobs:
           echo "MYSQL_PASSWORD is ${{ secrets.MYSQL_PASSWORD }}"
 
   deploy-backend:
-    needs: display-staging-environment
     uses: ./.github/workflows/test.yaml
     with:
       staging_environment: ${{ inputs.staging_environment }}
 
   using-artifact:
-    runs-on: ubuntu-latest
     needs: deploy-backend
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: openapi-schema-stage1
-          path: frontend/schema/
-
-      - name: Display schema
-        run: |
-          cd frontend/schema/
-          ls -la
-          cat schema.yml
+    uses: ./.github/workflows/using-artifact.yaml
