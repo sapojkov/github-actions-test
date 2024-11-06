@@ -26,6 +26,7 @@ jobs:
       - name: Display input staging_environment
         run: |
           echo "Selected environment: ${{ inputs.staging_environment }}"
+          echo "MYSQL_DATABASE is ${{ vars.MY_DATABASE }}"
           echo "MYSQL_PASSWORD is ${{ secrets.MYSQL_PASSWORD }}"
 
       - name: Shutdown Ubuntu MySQL (SUDO)
