@@ -29,7 +29,7 @@ jobs:
         run: |
           echo "Selected environment: ${{ inputs.staging_environment }}"
           echo "MYSQL_DATABASE is ${{ vars.MY_DATABASE }}"
-          echo "MYSQL_PASSWORD is ${{ secrets.MYSQL_PASSWORD }}"
+          echo "MYSQL_PASSWORD is ${{ vars.MYSQL_PASSWORD }}"
 
       - name: Shutdown Ubuntu MySQL (SUDO)
         run: sudo service mysql stop
@@ -42,7 +42,7 @@ jobs:
           mariadb version: '10.4.10'
           mysql database: ${{ vars.MY_DATABASE }}
           mysql user: ${{ vars.MY_USER }}
-          mysql password: ${{ secrets.MYSQL_PASSWORD }}
+          mysql password: ${{ vars.MYSQL_PASSWORD }}
 
       - name: Install dependencies
         run: |
