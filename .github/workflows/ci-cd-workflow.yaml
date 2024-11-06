@@ -28,6 +28,8 @@ jobs:
     uses: ./.github/workflows/test.yaml
     with:
       staging_environment: ${{ inputs.staging_environment }}
+    secrets:
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
 
   using-artifact:
     needs: deploy-backend
