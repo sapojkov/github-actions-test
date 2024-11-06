@@ -1,0 +1,21 @@
+name: CI/CD Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_environment:
+        type: choice
+        description: Choose Staging Environment
+        options:
+          - stage1
+          - stage2
+          - stage3
+          - stage4
+          - Production
+
+jobs:
+
+  deploy-backend:
+    uses: ./.github/workflows/test.yaml
+    with:
+      staging_environment: ${{ inputs.staging_environment }}
