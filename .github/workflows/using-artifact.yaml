@@ -1,0 +1,22 @@
+name: Download artifact from other workflow_call
+
+on:
+  workflow_call:
+
+jobs:
+  using-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: openapi-schema-stage1
+          path: frontend/schema/
+
+      - name: Display schema
+        run: |
+          cd frontend/schema/
+          ls -la
+          echo "******************************************************************************"
+          cat schema.yml
+          echo "******************************************************************************"
