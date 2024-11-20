@@ -44,7 +44,6 @@ jobs:
           task-definition-arn: arn:aws:ecs:us-west-1:357844151986:task-definition/fondo-dev-web-app-backend:21
           container-name: web-app-backend
           image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
-          environment-variables: s3://{{ vars.AWS_S3_BUCKET_NAME_ENV }}/${{ inputs.staging_environment }}.env"
 
       - name: Register the updated ECS task definition for web (creating a new revision)
         run: |
