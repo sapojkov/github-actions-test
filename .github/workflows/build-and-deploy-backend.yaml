@@ -48,10 +48,10 @@ jobs:
       - name: Register the updated ECS task definition for web (creating a new revision)
         run: |
           ls -la /home/runner/work/_temp/
-          # echo "**************************************************************"
-          # echo "${{ steps.task-def-web.outputs.task-definition }}"
-          # echo "**************************************************************"
-          # echo "${{ steps.task-def-web.outputs.task-definition }}" > task-def.json
-          # echo task-def.json
-          # aws ecs register-task-definition --cli-input-json file:/${{ steps.task-def-web.outputs.task-definition }}
+          echo "**************************************************************"
+          cat "${{ steps.task-def-web.outputs.task-definition }}"
+          echo "**************************************************************"
+          cat "${{ steps.task-def-web.outputs.task-definition }}" > task-def.json
+          cat task-def.json
+          aws ecs register-task-definition --cli-input-json file:/${{ steps.task-def-web.outputs.task-definition }}
         id: register-task-def-web
