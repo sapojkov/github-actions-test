@@ -1,0 +1,52 @@
+name: Build and Deploy to Amazon ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_environment:
+        type: choice
+        description: Choose Staging Environment
+        options:
+          - stage1
+          - stage2
+          - stage3
+          - stage4
+          - prod-lite
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.staging_environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_BACKEND_DEPLOY_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_BACKEND_DEPLOY_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Fill in the new image ID in the Amazon ECS task definition web
+        id: task-def-web
+        uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc
+        with:
+          task-definition: arn:aws:ecs:us-west-1:357844151986:task-definition/fondo-dev-web-app-backend:21
+          container-name: web-app-backend
+          image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
+          environment-files: s3://{{ vars.AWS_S3_BUCKET_NAME_ENV }}/${{ inputs.staging_environment }}.env"
+
+      - name: Register the updated ECS task definition for web (creating a new revision)
+        run: |
+          aws ecs register-task-definition --cli-input-json "${{ steps.task-def-web.outputs.task-definition }}"
+        id: register-task-def-web
