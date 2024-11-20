@@ -39,7 +39,7 @@ jobs:
 
       - name: Fill in the new image ID in the Amazon ECS task definition web
         id: task-def-web
-        uses: aws-actions/amazon-ecs-render-task-definition@v1.6
+        uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
         with:
           task-definition-arn: arn:aws:ecs:us-west-1:357844151986:task-definition
           task-definition-family: fondo-dev-web-app-backend
