@@ -43,6 +43,7 @@ jobs:
         with:
           task-definition-arn: arn:aws:ecs:us-west-1:357844151986:task-definition
           task-definition-family: fondo-dev-web-app-backend
+          task-definition-revision: 21
           container-name: web-app-backend
           image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
           environment-variables: s3://{{ vars.AWS_S3_BUCKET_NAME_ENV }}/${{ inputs.staging_environment }}.env"
