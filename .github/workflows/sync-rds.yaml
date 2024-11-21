@@ -78,7 +78,7 @@ jobs:
       run: |
         if [ "${{ github.event.inputs.delete_db_instance_id }}" != "" ]; then
           aws rds delete-db-instance \
-            --db-instance-identifier ${{ github.event.inputs.delete_db_instance_id }} \
+            --db-instance-identifier ${{ github.event.inputs.delete_db_instance_id }}
         fi
 
     # - name: Get Target RDS Instance Endpoint
