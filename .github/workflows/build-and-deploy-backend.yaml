@@ -71,11 +71,11 @@ jobs:
         run: |
 
           echo "******************************************************************************"
-          cat ${{ steps.task-def-runonce-scripts.outputs.task-definition }} > validated-task.json
+          cat ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
           echo "******************************************************************************"
 
           arn=$(aws ecs register-task-definition \
-            --cli-input-json file://validated-task.json \
+            --cli-input-json file://${{ steps.task-def-runonce-scripts.outputs.task-definition }} \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
 
