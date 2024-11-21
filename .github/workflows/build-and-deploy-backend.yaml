@@ -70,9 +70,9 @@ jobs:
             --container-definitions '[]' \
             --generate-cli-skeleton output > skeleton.json
 
-          jq -s '.[0] * .[1]' skeleton.json <(echo '${{ steps.task-def-runonce-scripts.outputs.task-definition }}') > validated-task.json
+          cat skeleton.json
+        #   jq -s '.[0] * .[1]' skeleton.json <(echo '${{ steps.task-def-runonce-scripts.outputs.task-definition }}') > validated-task.json
 
-          cat validated-task.json
 
         #   arn=$(aws ecs register-task-definition \
         #     --cli-input-json file://validated-task.json \
