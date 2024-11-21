@@ -74,17 +74,16 @@ jobs:
           container-name: web-app-runonce-scripts
           image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
 
-      - name: Register new task definition revision for runonce-scripts
-        id: deploy-task-def-web
+      - name: Register a new task definition revision for runonce-scripts
+        id: register-task-def-runonce-scripts
         uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a
         with:
           task-definition: ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
           cluster: ${{ vars.ECS_CLUSTER }}
-          run-task: true
 
-    #   - name: Run ECS Task for runonce-scripts
-    #     run: |
-    #       aws ecs run-task \
-    #         --cluster ${{ vars.ECS_CLUSTER }} \
-    #         --task-definition ${{ vars.TASK_DEF_RUNONCE_SCRIPTS_FAMILY_NAME }}:4 \
-    #         --launch-type EC2
+      - name: Run ECS Task for runonce-scripts
+        run: |
+          aws ecs run-task \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --task-definition ${{ steps.register-task-def-runonce-scripts.outputs.task-definition-arn }} \
+            --launch-type EC2
