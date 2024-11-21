@@ -66,5 +66,5 @@ jobs:
         run: |
           aws ecs run-task \
             --cluster ${{ vars.ECS_CLUSTER }} \
-            --task-definition arn:aws:ecs:us-west-1:357844151986:task-definition/fondo-dev-web-app-runonce-scripts:4 \
+            --task-definition ${{ vars.TASK_DEF_RUNONCE_SCRIPTS_FAMILY_NAME }}:${{ steps.task-def-runonce-scripts.outputs.task-definition }} \
             --launch-type EC2
