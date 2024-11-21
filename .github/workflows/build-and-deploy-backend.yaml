@@ -30,17 +30,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Upgrade awscli
-        run: |
-          sudo apt-get remove awscli
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
-          unzip -q /tmp/awscliv2.zip -d /tmp
-          rm /tmp/awscliv2.zip
-          sudo /tmp/aws/install --update
-          rm -rf /tmp/aws/
-          echo "******************************************************************************"
-          aws --version
-          echo "******************************************************************************"
+    #   - name: Upgrade awscli
+    #     run: |
+    #       sudo apt-get remove awscli
+    #       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+    #       unzip -q /tmp/awscliv2.zip -d /tmp
+    #       rm /tmp/awscliv2.zip
+    #       sudo /tmp/aws/install --update
+    #       rm -rf /tmp/aws/
+    #       echo "******************************************************************************"
+    #       aws --version
+    #       echo "******************************************************************************"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
