@@ -62,18 +62,13 @@ jobs:
           container-name: web-app-runonce-scripts
           image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
 
-      - name: Validate and Register the ECS Task Definition for runonce-scripts
+      - name: Register the updated ECS task definition for runonce-scripts
         id: register-task-def-runonce-scripts
         run: |
-          aws ecs register-task-definition --generate-cli-skeleton output > skeleton.json
-
-          jq -s '.[0] * .[1]' skeleton.json <(echo '${{ steps.task-def-runonce-scripts.outputs.task-definition }}') > validated-task.json
-
           arn=$(aws ecs register-task-definition \
-            --cli-input-json file://validated-task.json \
+            --cli-input-json "${{ steps.task-def-runonce-scripts.outputs.task-definition }}" \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
-
           echo "taskDefinitionArn=$arn" >> $GITHUB_ENV
 
     #   - name: Run ECS Task for runonce-scripts
