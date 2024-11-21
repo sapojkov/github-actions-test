@@ -71,6 +71,8 @@ jobs:
             --generate-cli-skeleton output > skeleton.json
 
           cat skeleton.json
+          echo "******************************************************************************"
+          cat ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
         #   jq -s '.[0] * .[1]' skeleton.json <(echo '${{ steps.task-def-runonce-scripts.outputs.task-definition }}') > validated-task.json
 
 
