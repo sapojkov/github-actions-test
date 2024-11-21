@@ -49,43 +49,36 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_BACKEND_DEPLOY_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-    #   - name: Fill in the new image ID in the Amazon ECS task definition web
-    #     id: task-def-web
-    #     uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
-    #     with:
-    #       task-definition-arn: arn:aws:ecs:us-west-1:357844151986:task-definition/fondo-dev-web-app-backend:21
-    #       container-name: web-app-backend
-    #       image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
-
-    #   - name: Deploy Amazon ECS task definition web
-    #     id: deploy-task-def-web
-    #     uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a
-    #     with:
-    #       task-definition: ${{ steps.task-def-web.outputs.task-definition }}
-    #       service: ${{ vars.ECS_SERVICE }}
-    #       cluster: ${{ vars.ECS_CLUSTER }}
-    #       wait-for-service-stability: true
-
-      - name: Fill in the new image ID in the Amazon ECS task definition runonce-scripts
-        id: task-def-runonce-scripts
+      - name: Fill in the new image ID in the Amazon ECS task definition web
+        id: task-def-web
         uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
         with:
-          task-definition-arn: arn:aws:ecs:us-west-1:357844151986:task-definition/fondo-dev-web-app-runonce-scripts:4
-          container-name: web-app-runonce-scripts
+          task-definition-arn: arn:aws:ecs:us-west-1:357844151986:task-definition/fondo-dev-web-app-backend:21
+          container-name: web-app-backend
           image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
 
-      - name: Register a new task definition revision for runonce-scripts
-        id: register-task-def-runonce-scripts
+      - name: Deploy Amazon ECS task definition web
+        id: deploy-task-def-web
         uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
         with:
-          task-definition: ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
+          task-definition: ${{ steps.task-def-web.outputs.task-definition }}
+          service: ${{ vars.ECS_SERVICE }}
           cluster: ${{ vars.ECS_CLUSTER }}
-          run-task: true
-          run-task-launch-type: EC2
+          wait-for-service-stability: true
 
-    #   - name: Run ECS Task for runonce-scripts
-    #     run: |
-    #       aws ecs run-task \
-    #         --cluster ${{ vars.ECS_CLUSTER }} \
-    #         --task-definition ${{ steps.register-task-def-runonce-scripts.outputs.task-definition-arn }} \
-    #         --launch-type EC2
+    #   - name: Fill in the new image ID in the Amazon ECS task definition runonce-scripts
+    #     id: task-def-runonce-scripts
+    #     uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
+    #     with:
+    #       task-definition-arn: arn:aws:ecs:us-west-1:357844151986:task-definition/fondo-dev-web-app-runonce-scripts:4
+    #       container-name: web-app-runonce-scripts
+    #       image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
+
+    #   - name: Register a new task definition revision for runonce-scripts
+    #     id: register-task-def-runonce-scripts
+    #     uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
+    #     with:
+    #       task-definition: ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
+    #       cluster: ${{ vars.ECS_CLUSTER }}
+    #       run-task: true
+    #       run-task-launch-type: EC2
