@@ -33,6 +33,9 @@ jobs:
       - name: Upgrade awscli
         run: |
           pip install --upgrade awscli
+          echo "******************************************************************************"
+          aws --version
+          echo "******************************************************************************"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -58,28 +61,28 @@ jobs:
     #       cluster: ${{ vars.ECS_CLUSTER }}
     #       wait-for-service-stability: true
 
-      - name: Fill in the new image ID in the Amazon ECS task definition runonce-scripts
-        id: task-def-runonce-scripts
-        uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
-        with:
-          task-definition-arn: arn:aws:ecs:us-west-1:357844151986:task-definition/fondo-dev-web-app-runonce-scripts:4
-          container-name: web-app-runonce-scripts
-          image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
+    #   - name: Fill in the new image ID in the Amazon ECS task definition runonce-scripts
+    #     id: task-def-runonce-scripts
+    #     uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
+    #     with:
+    #       task-definition-arn: arn:aws:ecs:us-west-1:357844151986:task-definition/fondo-dev-web-app-runonce-scripts:4
+    #       container-name: web-app-runonce-scripts
+    #       image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.10
 
-      - name: Register the ECS Task Definition for runonce-scripts
-        id: register-task-def-runonce-scripts
-        run: |
+    #   - name: Register the ECS Task Definition for runonce-scripts
+    #     id: register-task-def-runonce-scripts
+    #     run: |
 
-          echo "******************************************************************************"
-          cat ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
-          echo "******************************************************************************"
+    #       echo "******************************************************************************"
+    #       cat ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
+    #       echo "******************************************************************************"
 
-          arn=$(aws ecs register-task-definition \
-            --cli-input-json file://${{ steps.task-def-runonce-scripts.outputs.task-definition }} \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
+    #       arn=$(aws ecs register-task-definition \
+    #         --cli-input-json file://${{ steps.task-def-runonce-scripts.outputs.task-definition }} \
+    #         --query 'taskDefinition.taskDefinitionArn' \
+    #         --output text)
 
-          echo "taskDefinitionArn=$arn" >> $GITHUB_ENV
+    #       echo "taskDefinitionArn=$arn" >> $GITHUB_ENV
 
     #   - name: Run ECS Task for runonce-scripts
     #     run: |
