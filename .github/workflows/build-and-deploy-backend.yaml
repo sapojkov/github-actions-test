@@ -30,6 +30,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Upgrade awscli
+        run: |
+          pip install --upgrade awscli
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -66,9 +70,8 @@ jobs:
         id: register-task-def-runonce-scripts
         run: |
 
-          jq '{taskDefinition: .}' ${{ steps.task-def-runonce-scripts.outputs.task-definition }} > validated-task.json
           echo "******************************************************************************"
-          cat validated-task.json
+          cat ${{ steps.task-def-runonce-scripts.outputs.task-definition }} > validated-task.json
           echo "******************************************************************************"
 
           arn=$(aws ecs register-task-definition \
