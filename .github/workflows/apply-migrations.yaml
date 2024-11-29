@@ -86,3 +86,6 @@ jobs:
             fi
             sleep 10
           done
+
+      - name: Proceed with Next Steps
+        run: echo "Migrations completed successfully! Proceeding to next step."
