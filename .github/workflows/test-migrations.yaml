@@ -16,6 +16,7 @@ jobs:
         id: run-ecs-task
         run: |
           echo "Run migrations"
+          sleep 10
           echo "BREAK_CODE=1" >> $GITHUB_ENV
 
       - name: Wait for Task Completion
