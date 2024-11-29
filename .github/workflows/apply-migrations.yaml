@@ -28,8 +28,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_BACKEND_DEPLOY_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_BACKEND_DEPLOY_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
       # - name: Login to Amazon ECR
@@ -86,10 +86,3 @@ jobs:
             fi
             sleep 10
           done
-
-      - name: "Announce Failure"
-        if: ${{ failure() }}
-        run: |
-          curl -X POST -H 'Content-type: application/json' --data '{
-            "text": ":fire:Migrations FAILED!:fire:\r\nhttps://github.com/'"${{ github.repository }}"'/actions/runs/'"${{ github.run_id }}"'"
-          }' ${{ secrets.SLACK_DEV_EVENTS_WEBHOOK_URL }}
