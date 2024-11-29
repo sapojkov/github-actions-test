@@ -1,0 +1,33 @@
+name: Test-migrations
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Run ECS Task to Apply Migrations
+        id: run-ecs-task
+        run: |
+          echo "Run migrations"
+          sleep 10
+          echo "BREAK_CODE=0" >> $GITHUB_ENV
+
+      - name: Wait for Task Completion
+        id: wait-for-ecs-task
+        run: |
+          if [[ ${{ env.BREAK_CODE }} -eq 0 ]]; then
+            echo "Migrations applied successfully!"
+            exit 0
+          else
+            echo "Migrations failed!"
+            exit 1
+
+      - name: Proceed with Next Steps
+        run: echo "Migrations completed successfully! Proceeding to next step."

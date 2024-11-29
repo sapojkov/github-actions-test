@@ -42,37 +42,37 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_BACKEND_DEPLOY_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_REGION }}
 
-    # - name: Set Snapshot ID
-    #   id: snapshot
-    #   run: |
-    #     if [ "${{ github.event.inputs.snapshot_id }}" != "" ]; then
-    #       SNAPSHOT_ID=${{ github.event.inputs.snapshot_id }}
-    #     else
-    #       SNAPSHOT_ID="prod-snapshot-$(date +%Y-%m-%d-%H-%M-%S)"
-    #       aws rds create-db-snapshot \
-    #         --db-snapshot-identifier "$SNAPSHOT_ID" \
-    #         --db-instance-identifier ${{ vars.SOURCE_RDS_INSTANCE_ID }}
-    #       aws rds wait db-snapshot-completed \
-    #         --db-snapshot-identifier "$SNAPSHOT_ID"
-    #     fi
-    #     echo "SNAPSHOT_ID=$SNAPSHOT_ID" >> $GITHUB_ENV
+    - name: Set Snapshot ID
+      id: snapshot
+      run: |
+        if [ "${{ github.event.inputs.snapshot_id }}" != "" ]; then
+          SNAPSHOT_ID=${{ github.event.inputs.snapshot_id }}
+        else
+          SNAPSHOT_ID="prod-snapshot-$(date +%Y-%m-%d-%H-%M-%S)"
+          aws rds create-db-snapshot \
+            --db-snapshot-identifier "$SNAPSHOT_ID" \
+            --db-instance-identifier ${{ vars.SOURCE_RDS_INSTANCE_ID }}
+          aws rds wait db-snapshot-completed \
+            --db-snapshot-identifier "$SNAPSHOT_ID"
+        fi
+        echo "SNAPSHOT_ID=$SNAPSHOT_ID" >> $GITHUB_ENV
 
-    # - name: Set Target RDS Instance ID
-    #   id: target_rds_instance_id
-    #   run: |
-    #     GENERATED_INSTANCE_ID="target-rds-instance-id-$(date +%Y-%m-%d-%H-%M-%S)"
-    #     echo "TARGET_RDS_INSTANCE_ID=$GENERATED_INSTANCE_ID" >> $GITHUB_ENV
+    - name: Set Target RDS Instance ID
+      id: target_rds_instance_id
+      run: |
+        GENERATED_INSTANCE_ID="fondo-prod-lite-mdb-$(date +%Y-%m-%d-%H-%M-%S)"
+        echo "TARGET_RDS_INSTANCE_ID=$GENERATED_INSTANCE_ID" >> $GITHUB_ENV
 
-    # - name: Restore Snapshot to Target RDS
-    #   run: |
-    #     aws rds restore-db-instance-from-db-snapshot \
-    #       --db-instance-identifier $TARGET_RDS_INSTANCE_ID \
-    #       --db-snapshot-identifier "$SNAPSHOT_ID"
+    - name: Restore Snapshot to Target RDS
+      run: |
+        aws rds restore-db-instance-from-db-snapshot \
+          --db-instance-identifier $TARGET_RDS_INSTANCE_ID \
+          --db-snapshot-identifier "$SNAPSHOT_ID"
 
-    # - name: Confirm Target Database Availability
-    #   run: |
-    #     aws rds wait db-instance-available \
-    #       --db-instance-identifier $TARGET_RDS_INSTANCE_ID
+    - name: Confirm Target Database Availability
+      run: |
+        aws rds wait db-instance-available \
+          --db-instance-identifier $TARGET_RDS_INSTANCE_ID
 
     - name: Delete previous DB instance
       run: |
@@ -82,19 +82,19 @@ jobs:
             --skip-final-snapshot
         fi
 
-    # - name: Get Target RDS Instance Endpoint
-    #   id: rds_endpoint
-    #   run: |
-    #     INSTANCE_ENDPOINT=$(aws rds describe-db-instances \
-    #       --db-instance-identifier $TARGET_RDS_INSTANCE_ID \
-    #       --query "DBInstances[0].Endpoint.Address" \
-    #       --output text)
-    #     echo "RDS_ENDPOINT=$INSTANCE_ENDPOINT" >> $GITHUB_ENV
+    - name: Get Target RDS Instance Endpoint
+      id: rds_endpoint
+      run: |
+        INSTANCE_ENDPOINT=$(aws rds describe-db-instances \
+          --db-instance-identifier $TARGET_RDS_INSTANCE_ID \
+          --query "DBInstances[0].Endpoint.Address" \
+          --output text)
+        echo "RDS_ENDPOINT=$INSTANCE_ENDPOINT" >> $GITHUB_ENV
 
-    # - name: Create CNAME Record for RDS Instance
-    #   run: |
-    #     aws amscm create-rfc --change-type-id "ct-2murl5xzbxoxf" --change-type-version "1.0" \
-    #       --title "Add DNS CNAME Record for RDS" \
-    #       --execution-parameters "{\"DocumentName\": \"AWSManagedServices-CreateDNSCnameRecord-Admin\", \
-    #         \"Region\": \"${{ env.AWS_DEFAULT_REGION }}\", \
-    #         \"Parameters\": {\"RecordName\": [\"${{ env.CNAME_HOST_DB }}\"], \"RecordCname\": [\"$RDS_ENDPOINT\"]}}"
+    - name: Create CNAME Record for RDS Instance
+      run: |
+        aws amscm create-rfc --change-type-id "ct-2murl5xzbxoxf" --change-type-version "1.0" \
+          --title "Add DNS CNAME Record for RDS" \
+          --execution-parameters "{\"DocumentName\": \"AWSManagedServices-CreateDNSCnameRecord-Admin\", \
+            \"Region\": \"${{ env.AWS_DEFAULT_REGION }}\", \
+            \"Parameters\": {\"RecordName\": [\"${{ env.CNAME_HOST_DB }}\"], \"RecordCname\": [\"$RDS_ENDPOINT\"]}}"
