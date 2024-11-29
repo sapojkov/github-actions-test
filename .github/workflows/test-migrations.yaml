@@ -28,6 +28,7 @@ jobs:
           else
             echo "Migrations failed!"
             exit 1
+          fi
 
       - name: Proceed with Next Steps
         run: echo "Migrations completed successfully! Proceeding to next step."
