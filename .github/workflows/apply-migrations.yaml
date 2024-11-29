@@ -1,19 +1,17 @@
 name: Apply migrations
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       staging_environment:
-        description: "The environment for deployment (e.g., staging, production)"
-        required: true
-        type: string
-    secrets:
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-      SLACK_DEV_EVENTS_WEBHOOK_URL:
-        required: true
+        type: choice
+        description: Choose Staging Environment
+        options:
+          - stage1
+          - stage2
+          - stage3
+          - stage4
+          - prod-lite
 
 jobs:
   apply-migrations:
