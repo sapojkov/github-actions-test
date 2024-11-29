@@ -1,0 +1,97 @@
+name: Apply migrations
+
+on:
+  workflow_call:
+    inputs:
+      staging_environment:
+        description: "The environment for deployment (e.g., staging, production)"
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      SLACK_DEV_EVENTS_WEBHOOK_URL:
+        required: true
+
+jobs:
+  apply-migrations:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.staging_environment }}
+
+    steps:
+
+      - name: Install AWS CLI
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y awscli
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v1
+
+      # - name: Build, tag, and push image to Amazon ECR
+      #   id: build-image
+      #   env:
+      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #     IMAGE_TAG: ${{ github.sha }}
+      #   run: |
+      #     docker build -t $ECR_REGISTRY/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG .
+      #     docker push $ECR_REGISTRY/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG
+      #     echo "image=$ECR_REGISTRY/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      # - name: Fill in the new image ID in the Amazon ECS task definition apply-migrations
+      #   id: task-def-apply-migrations
+      #   uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
+      #   with:
+      #     task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_APPLY_MIGRATIONS_ARN }}
+      #     container-name: ${{ vars.APPLY_MIGRATIONS_CONTAINER_NAME }}
+      #     image: ${{ steps.build-image.outputs.image }}
+
+      - name: Run ECS Task to Apply Migrations
+        id: run-ecs-task-apply-migrations
+        run: |
+          TASK_MIGRATIONS_ARN=$(aws ecs run-task \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --launch-type EC2 \
+            --task-definition ${{ vars.ECS_TASK_DEFINITION_APPLY_MIGRATIONS_ARN }} \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          echo "Started ECS task with ARN: $TASK_MIGRATIONS_ARN"
+          echo "TASK_MIGRATIONS_ARN=$TASK_MIGRATIONS_ARN" >> $GITHUB_ENV
+
+      - name: Wait for Task Completion
+        id: wait-for-ecs-task
+        run: |
+          while true; do
+            STATUS=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].lastStatus' --output text)
+            echo "Task status: $STATUS"
+            if [[ "$STATUS" == "STOPPED" ]]; then
+              BREAK_CODE=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].containers[0].exitCode' --output text)
+              echo "Task exit code: $BREAK_CODE"
+              if [[ "$BREAK_CODE" -eq 0 ]]; then
+                echo "Migrations applied successfully!"
+                exit 0
+              else
+                echo "Migrations failed!"
+                exit 1
+              fi
+            fi
+            sleep 10
+          done
+
+      - name: "Announce Failure"
+        if: ${{ failure() }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": ":fire:Migrations FAILED!:fire:\r\nhttps://github.com/'"${{ github.repository }}"'/actions/runs/'"${{ github.run_id }}"'"
+          }' ${{ secrets.SLACK_DEV_EVENTS_WEBHOOK_URL }}
