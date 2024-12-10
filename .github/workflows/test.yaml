@@ -20,97 +20,97 @@ jobs:
 
     steps:
 
-      - name: Checkout
-        uses: actions/checkout@v4
+      # - name: Checkout
+      #   uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+      # - name: Set up Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.10"
 
-      - name: Display input staging_environment
-        run: |
-          echo "Selected environment: ${{ inputs.staging_environment }}"
-          echo "MYSQL_DATABASE is ${{ vars.MY_DATABASE }}"
-          echo "MYSQL_PASSWORD is ${{ secrets.MYSQL_PASSWORD }}"
+      # - name: Display input staging_environment
+      #   run: |
+      #     echo "Selected environment: ${{ inputs.staging_environment }}"
+      #     echo "MYSQL_DATABASE is ${{ vars.MY_DATABASE }}"
+      #     echo "MYSQL_PASSWORD is ${{ secrets.MYSQL_PASSWORD }}"
 
-      - name: Shutdown Ubuntu MySQL (SUDO)
-        run: sudo service mysql stop
+      # - name: Shutdown Ubuntu MySQL (SUDO)
+      #   run: sudo service mysql stop
 
-      - name: Set up MariaDB
-        uses: getong/mariadb-action@v1.11
-        with:
-          character set server: 'utf8'
-          collation server: 'utf8_general_ci'
-          mariadb version: '10.4.10'
-          mysql database: ${{ vars.MY_DATABASE }}
-          mysql user: ${{ vars.MY_USER }}
-          mysql password: ${{ vars.MYSQL_PASSWORD }}
+      # - name: Set up MariaDB
+      #   uses: getong/mariadb-action@v1.11
+      #   with:
+      #     character set server: 'utf8'
+      #     collation server: 'utf8_general_ci'
+      #     mariadb version: '10.4.10'
+      #     mysql database: ${{ vars.MY_DATABASE }}
+      #     mysql user: ${{ vars.MY_USER }}
+      #     mysql password: ${{ vars.MYSQL_PASSWORD }}
 
-      - name: Install dependencies
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
+      # - name: Install dependencies
+      #   run: |
+      #     python -m venv venv
+      #     source venv/bin/activate
+      #     pip install -r requirements.txt
 
-      - name: Apply Django migrations
-        env:
-          DATABASE_HOST: 127.0.0.1
-          DATABASE_NAME: my_database
-          DATABASE_USER: my_user
-          DATABASE_PASSWORD: my_password
-        run: |
-          source venv/bin/activate
-          cd myproject/
-          python manage.py migrate
+      # - name: Apply Django migrations
+      #   env:
+      #     DATABASE_HOST: 127.0.0.1
+      #     DATABASE_NAME: my_database
+      #     DATABASE_USER: my_user
+      #     DATABASE_PASSWORD: my_password
+      #   run: |
+      #     source venv/bin/activate
+      #     cd myproject/
+      #     python manage.py migrate
 
-      - name: Generate spectacular schema
-        run: |
-          source venv/bin/activate
-          cd myproject/
-          python manage.py spectacular --file schema.yml --api-version 1.0
+      # - name: Generate spectacular schema
+      #   run: |
+      #     source venv/bin/activate
+      #     cd myproject/
+      #     python manage.py spectacular --file schema.yml --api-version 1.0
 
-      - name: Display spectacular schema
-        run: |
-          cd myproject/
-          cat schema.yml
+      # - name: Display spectacular schema
+      #   run: |
+      #     cd myproject/
+      #     cat schema.yml
 
-      - name: Upload OpenAPI schema as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: openapi-schema-stage1
-          path: myproject/schema.yml
+      # - name: Upload OpenAPI schema as artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: openapi-schema-stage1
+      #     path: myproject/schema.yml
 
-      - name: Read a Variable
-        run: |
-          echo "${{ vars.API_URL }}"
-          echo "${{ vars.PROD_VAR }}"
-          echo "${{ vars.API_URL_URL }}"
+      # - name: Read a Variable
+      #   run: |
+      #     echo "${{ vars.API_URL }}"
+      #     echo "${{ vars.PROD_VAR }}"
+      #     echo "${{ vars.API_URL_URL }}"
 
-      - name: Read a Secret
-        run: |
-          echo "My prod_secret is ${{ secrets.PRODUCTION_SECRET }}"
-          echo "My global_secret is ${{ secrets.MY_SECRET }}"
+      # - name: Read a Secret
+      #   run: |
+      #     echo "My prod_secret is ${{ secrets.PRODUCTION_SECRET }}"
+      #     echo "My global_secret is ${{ secrets.MY_SECRET }}"
 
       - name: Render vars as JSON and save to file
         run: |
-          echo '${{ toJSON(vars) }}' > vars.json
+          echo '${{ toJSON(vars) }}'
 
-      - name: Create .env file from vars.json
-        run: |
-          echo "Creating .env file..."
-          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > .env
+      # - name: Create .env file from vars.json
+      #   run: |
+      #     echo "Creating .env file..."
+      #     jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > .env
 
-      - name: Display .env file contents
-        run: |
-          cat .env
+      # - name: Display .env file contents
+      #   run: |
+      #     cat .env
 
-  download-artifacts:
-    needs: top-env-variables
-    runs-on: ubuntu-latest
+  # download-artifacts:
+  #   needs: top-env-variables
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: openapi-schema-stage1
+    # steps:
+    #   - name: Download artifacts
+    #     uses: actions/download-artifact@v3
+    #     with:
+    #       name: openapi-schema-stage1
