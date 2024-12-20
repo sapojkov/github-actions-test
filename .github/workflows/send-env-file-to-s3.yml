@@ -32,6 +32,9 @@ jobs:
         run: |
           jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > ${{ inputs.staging_environment }}-infrastructure.env
 
+      - name: List files in workspace
+        run: ls -l
+
       - name: Upload .env file as artifact
         uses: actions/upload-artifact@v3
         with:
@@ -54,6 +57,9 @@ jobs:
         run: |
           jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > ${{ inputs.staging_environment }}-integration.env
 
+      - name: List files in workspace
+        run: ls -l
+
       - name: Upload .env file as artifact
         uses: actions/upload-artifact@v3
         with:
@@ -70,12 +76,15 @@ jobs:
         with:
           path: env_files
 
-      - name: Combine .env files and remove duplicates
-        run: |
-          cat env_files/*.env | sort | uniq > ${{ inputs.staging_environment }}-test.env
-          echo *************************************************************
-          cat ${{ inputs.staging_environment }}-test.env
-          echo *************************************************************
+      - name: List files in env_files directory
+        run: ls -l ./env_files
+
+      # - name: Combine .env files and remove duplicates
+      #   run: |
+      #     cat env_files/*.env | sort | uniq > ${{ inputs.staging_environment }}-test.env
+      #     echo *************************************************************
+      #     cat ${{ inputs.staging_environment }}-test.env
+      #     echo *************************************************************
 
       # - name: Configure AWS credentials
       #   uses: aws-actions/configure-aws-credentials@v2
