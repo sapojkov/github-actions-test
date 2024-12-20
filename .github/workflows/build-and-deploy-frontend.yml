@@ -1,0 +1,89 @@
+name: Deploy Frontend to Staging Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_environment:
+        description: "The environment for deployment (e.g., staging, production)"
+        required: true
+        type: choice
+        options:
+          - stage1
+          - stage2
+          - stage3
+          - stage4
+          - prod-lite
+          - Production
+
+jobs:
+  generate-env-file-repository:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.staging_environment }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Render vars as JSON and save to file
+        run: |
+          echo '${{ toJSON(vars) }}' > vars.json
+
+      - name: Create .env file from vars.json
+        run: |
+          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > ${{ inputs.staging_environment }}-repository.env
+
+      - name: Upload .env file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.staging_environment }}-repository-env
+          path: ${{ inputs.staging_environment }}-repository.env
+
+  generate-env-file-application:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.staging_environment }}-frontend-reactify
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+
+      - name: Render vars as JSON and save to file
+        run: |
+          echo '${{ toJSON(vars) }}' > vars.json
+
+      - name: Create .env file from vars.json
+        run: |
+          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > ${{ inputs.staging_environment }}-frontend-reactify.env
+
+      - name: Upload .env file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.staging_environment }}-frontend-reactify-env
+          path: ${{ inputs.staging_environment }}-frontend-reactify.env
+
+  build-and-publish-frontend:
+    name: "Deploy Frontend Branch to Staging"
+    needs: [generate-env-file-application, generate-env-file-repository]
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.staging_environment }}-frontend-reactify
+    steps:
+      # - uses: actions/checkout@v4
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_BACKEND_DEPLOY_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_BACKEND_DEPLOY_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: env_files
+
+      - name: Combine .env files and remove duplicates
+        run: |
+          cut -d '=' -f1 env_files/${{ inputs.staging_environment }}-repository.env > exclude_keys.txt
+          grep -v -E '^\s*$|^\s*#' exclude_keys.txt > cleaned_exclude_keys.txt
+          grep -v -F -f cleaned_exclude_keys.txt env_files/${{ inputs.staging_environment }}-frontend-reactify.env > .env.production
+          echo ******************************************************************************
+          cat .env.production
+          echo ******************************************************************************
