@@ -36,7 +36,7 @@ jobs:
         run: ls -l
 
       - name: Upload .env file as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.staging_environment }}-infrastructure-env
           path: ${{ inputs.staging_environment }}-infrastructure.env
