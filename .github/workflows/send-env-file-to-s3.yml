@@ -75,6 +75,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: env_files
+          merge-multiple: true
 
       - name: List files in env_files directory
         run: ls -l ./env_files
