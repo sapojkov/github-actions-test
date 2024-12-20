@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Render vars as JSON and save to file
         run: |
@@ -61,18 +61,13 @@ jobs:
           path: ${{ inputs.staging_environment }}-frontend-reactify.env
 
   build-and-publish-frontend:
-    name: "Deploy Frontend Branch to Staging"
     needs: [generate-env-file-application, generate-env-file-repository]
     runs-on: ubuntu-latest
     environment: ${{ inputs.staging_environment }}-frontend-reactify
+    
     steps:
-      # - uses: actions/checkout@v4
-      # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v2
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_BACKEND_DEPLOY_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_BACKEND_DEPLOY_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ vars.AWS_REGION }}
+      - name: Check out the repository
+        uses: actions/checkout@v4
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
