@@ -30,7 +30,7 @@ jobs:
 
       - name: Create .env file from vars.json
         run: |
-          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > ${{ inputs.staging_environment }}-inw.env
+          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > ${{ inputs.staging_environment }}-infrastructure.env
 
       - name: List files in workspace
         run: ls -l
@@ -38,8 +38,8 @@ jobs:
       - name: Upload .env file as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.staging_environment }}-inw-env
-          path: ${{ inputs.staging_environment }}-inw.env
+          name: ${{ inputs.staging_environment }}-infrastructure-env
+          path: ${{ inputs.staging_environment }}-infrastructure.env
 
   generate-env-file-integration:
     runs-on: ubuntu-latest
@@ -69,6 +69,7 @@ jobs:
   combine-and-upload:
     needs: [generate-env-file-infrastructure, generate-env-file-integration]
     runs-on: ubuntu-latest
+    environment: ${{ inputs.staging_environment }}
 
     steps:
       - name: Download artifacts
@@ -87,19 +88,19 @@ jobs:
           cat ${{ inputs.staging_environment }}-test.env
           echo *************************************************************
 
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v2
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_BACKEND_DEPLOY_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_BACKEND_DEPLOY_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ vars.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_BACKEND_DEPLOY_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_BACKEND_DEPLOY_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-      # - name: Enable S3 bucket versioning
-      #   run: |
-      #     echo "Enabling versioning on S3 bucket..."
-      #     aws s3api put-bucket-versioning --bucket ${{ vars.AWS_S3_ENV_BUCKET_NAME }} --versioning-configuration Status=Enabled
+      - name: Enable S3 bucket versioning
+        run: |
+          echo "Enabling versioning on S3 bucket..."
+          aws s3api put-bucket-versioning --bucket ${{ vars.AWS_S3_ENV_BUCKET_NAME }} --versioning-configuration Status=Enabled
 
-      # - name: Upload .env file to S3
-      #   run: |
-      #     echo "Uploading .env file to S3..."
-      #     aws s3 cp ${{ inputs.staging_environment }}.env s3://${{ vars.AWS_S3_ENV_BUCKET_NAME }}/${{ inputs.staging_environment }}.env --sse
+      - name: Upload .env file to S3
+        run: |
+          echo "Uploading .env file to S3..."
+          aws s3 cp ${{ inputs.staging_environment }}-test.env s3://${{ vars.AWS_S3_ENV_BUCKET_NAME }}/${{ inputs.staging_environment }}-test.env --sse
