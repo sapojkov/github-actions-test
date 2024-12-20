@@ -82,7 +82,7 @@ jobs:
 
       - name: Combine .env files and remove duplicates
         run: |
-          cat env_files/*.env | sort | uniq > ${{ inputs.staging_environment }}-test.env
+          cat env_files/*.env | awk -F= '!seen[$1]++' > ${{ inputs.staging_environment }}-test.env
           echo *************************************************************
           cat ${{ inputs.staging_environment }}-test.env
           echo *************************************************************
