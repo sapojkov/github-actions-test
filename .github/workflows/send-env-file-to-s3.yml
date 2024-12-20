@@ -79,12 +79,12 @@ jobs:
       - name: List files in env_files directory
         run: ls -l ./env_files
 
-      # - name: Combine .env files and remove duplicates
-      #   run: |
-      #     cat env_files/*.env | sort | uniq > ${{ inputs.staging_environment }}-test.env
-      #     echo *************************************************************
-      #     cat ${{ inputs.staging_environment }}-test.env
-      #     echo *************************************************************
+      - name: Combine .env files and remove duplicates
+        run: |
+          cat env_files/*.env | sort | uniq > ${{ inputs.staging_environment }}-test.env
+          echo *************************************************************
+          cat ${{ inputs.staging_environment }}-test.env
+          echo *************************************************************
 
       # - name: Configure AWS credentials
       #   uses: aws-actions/configure-aws-credentials@v2
