@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Render vars as JSON and save to file
         run: |
@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Render vars as JSON and save to file
         run: |
@@ -84,9 +84,6 @@ jobs:
       - name: Combine .env files and remove duplicates
         run: |
           cat env_files/*.env | awk -F= '!seen[$1]++' | sort > ${{ inputs.staging_environment }}-test.env
-          echo *************************************************************
-          cat ${{ inputs.staging_environment }}-test.env
-          echo *************************************************************
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
