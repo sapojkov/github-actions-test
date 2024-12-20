@@ -1,22 +1,85 @@
-name: Download artifact from other workflow_call
+name: Deploy Frontend to Staging Environment
 
 on:
-  workflow_call:
+  workflow_dispatch:
+    inputs:
+      staging_environment:
+        description: "The environment for deployment (e.g., staging, production)"
+        required: true
+        type: choice
+        options:
+          - stage1
+          - stage2
+          - stage3
+          - stage4
+          - prod-lite
+          - Production
 
 jobs:
-  using-artifact:
+  generate-env-file-repository:
     runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: openapi-schema-stage1
-          path: frontend/schema/
+    environment: ${{ inputs.staging_environment }}
 
-      - name: Display schema
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Render vars as JSON and save to file
         run: |
-          cd frontend/schema/
-          ls -la
-          echo "******************************************************************************"
-          cat schema.yml
-          echo "******************************************************************************"
+          echo '${{ toJSON(vars) }}' > vars.json
+
+      - name: Create .env file from vars.json
+        run: |
+          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > ${{ inputs.staging_environment }}-repository.env
+
+      - name: Upload .env file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.staging_environment }}-repository-env
+          path: ${{ inputs.staging_environment }}-repository.env
+
+  generate-env-file-application:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.staging_environment }}-frontend-reactify
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Render vars as JSON and save to file
+        run: |
+          echo '${{ toJSON(vars) }}' > vars.json
+
+      - name: Create .env file from vars.json
+        run: |
+          jq -r 'to_entries | .[] | "\(.key)=\(.value)"' vars.json > ${{ inputs.staging_environment }}-frontend-reactify.env
+
+      - name: Upload .env file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.staging_environment }}-frontend-reactify-env
+          path: ${{ inputs.staging_environment }}-frontend-reactify.env
+
+  build-and-publish-frontend:
+    needs: [generate-env-file-application, generate-env-file-repository]
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.staging_environment }}-frontend-reactify
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: env_files
+          merge-multiple: true
+
+      - name: Combine .env files and remove duplicates
+        run: |
+          cut -d '=' -f1 env_files/${{ inputs.staging_environment }}-repository.env > exclude_keys.txt
+          grep -v -E '^\s*$|^\s*#' exclude_keys.txt > cleaned_exclude_keys.txt
+          grep -v -F -f cleaned_exclude_keys.txt env_files/${{ inputs.staging_environment }}-frontend-reactify.env > .env.production
+          echo ******************************************************************************
+          cat .env.production
+          echo ******************************************************************************
