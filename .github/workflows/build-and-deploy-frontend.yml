@@ -1,4 +1,4 @@
-name: Deploy Frontend to Staging Environment
+name: Deploy-Frontend
 
 on:
   workflow_dispatch:
@@ -64,7 +64,7 @@ jobs:
     needs: [generate-env-file-application, generate-env-file-repository]
     runs-on: ubuntu-latest
     environment: ${{ inputs.staging_environment }}-frontend-reactify
-    
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
