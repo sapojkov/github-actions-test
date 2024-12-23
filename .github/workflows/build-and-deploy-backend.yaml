@@ -30,28 +30,28 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y awscli
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
+      # - name: Set up Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.12"
 
-      - name: Install dependencies
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
+      # - name: Install dependencies
+      #   run: |
+      #     python -m venv venv
+      #     source venv/bin/activate
+      #     pip install -r requirements.txt
 
-      - name: Generate schema
-        run: |
-          source venv/bin/activate
-          cd myproject
-          python manage.py spectacular --file schema.yml --api-version 1.0
+      # - name: Generate schema
+      #   run: |
+      #     source venv/bin/activate
+      #     cd myproject
+      #     python manage.py spectacular --file schema.yml --api-version 1.0
 
-      - name: Upload OpenAPI schema as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: openapi-schema-${{ inputs.staging_environment }}
-          path: schema.yaml
+      # - name: Upload OpenAPI schema as artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: openapi-schema-${{ inputs.staging_environment }}
+      #     path: schema.yaml
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -66,101 +66,101 @@ jobs:
         with:
           task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_APPLY_MIGRATIONS_ARN }}
           container-name: ${{ vars.APPLY_MIGRATIONS_CONTAINER_NAME }}
-          image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
+          image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.29
 
-      - name: Run ECS Task to Apply Migrations
-        id: run-ecs-task-apply-migrations
-        run: |
-          TASK_MIGRATIONS_ARN=$(aws ecs run-task \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --launch-type EC2 \
-            --task-definition ${{ vars.ECS_TASK_DEFINITION_APPLY_MIGRATIONS_ARN }} \
-            --query 'tasks[0].taskArn' \
-            --output text)
+      # - name: Run ECS Task to Apply Migrations
+      #   id: run-ecs-task-apply-migrations
+      #   run: |
+      #     TASK_MIGRATIONS_ARN=$(aws ecs run-task \
+      #       --cluster ${{ vars.ECS_CLUSTER }} \
+      #       --launch-type EC2 \
+      #       --task-definition ${{ vars.ECS_TASK_DEFINITION_APPLY_MIGRATIONS_ARN }} \
+      #       --query 'tasks[0].taskArn' \
+      #       --output text)
 
-          echo "Started ECS task with ARN: $TASK_MIGRATIONS_ARN"
-          echo "TASK_MIGRATIONS_ARN=$TASK_MIGRATIONS_ARN" >> $GITHUB_ENV
+      #     echo "Started ECS task with ARN: $TASK_MIGRATIONS_ARN"
+      #     echo "TASK_MIGRATIONS_ARN=$TASK_MIGRATIONS_ARN" >> $GITHUB_ENV
 
-      - name: Wait for Task Completion
-        id: wait-for-ecs-task
-        run: |
-          while true; do
-            STATUS=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].lastStatus' --output text)
-            echo "Task status: $STATUS"
-            if [[ "$STATUS" == "STOPPED" ]]; then
-              BREAK_CODE=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].containers[0].exitCode' --output text)
-              echo "Task exit code: $BREAK_CODE"
-              if [[ "$BREAK_CODE" -eq 0 ]]; then
-                echo "Migrations applied successfully!"
-                exit 0
-              else
-                echo "Migrations failed!"
-                exit 1
-              fi
-            fi
-            sleep 10
-          done
+      # - name: Wait for Task Completion
+      #   id: wait-for-ecs-task
+      #   run: |
+      #     while true; do
+      #       STATUS=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].lastStatus' --output text)
+      #       echo "Task status: $STATUS"
+      #       if [[ "$STATUS" == "STOPPED" ]]; then
+      #         BREAK_CODE=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].containers[0].exitCode' --output text)
+      #         echo "Task exit code: $BREAK_CODE"
+      #         if [[ "$BREAK_CODE" -eq 0 ]]; then
+      #           echo "Migrations applied successfully!"
+      #           exit 0
+      #         else
+      #           echo "Migrations failed!"
+      #           exit 1
+      #         fi
+      #       fi
+      #       sleep 10
+      #     done
 
-      - name: Fill in the new image ID in the Amazon ECS task definition web
-        id: task-def-web
-        uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
-        with:
-          task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_WEB_ARN }}
-          container-name: ${{ vars.WEB_APP_CONTAINER_NAME }}
-          image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
+      # - name: Fill in the new image ID in the Amazon ECS task definition web
+      #   id: task-def-web
+      #   uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
+      #   with:
+      #     task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_WEB_ARN }}
+      #     container-name: ${{ vars.WEB_APP_CONTAINER_NAME }}
+      #     image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
 
-      - name: Deploy Amazon ECS task definition web
-        uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
-        with:
-          task-definition: ${{ steps.task-def-web.outputs.task-definition }}
-          service: ${{ vars.ECS_SERVICE_WEB_APP }}
-          cluster: ${{ vars.ECS_CLUSTER }}
-          wait-for-service-stability: true
+      # - name: Deploy Amazon ECS task definition web
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
+      #   with:
+      #     task-definition: ${{ steps.task-def-web.outputs.task-definition }}
+      #     service: ${{ vars.ECS_SERVICE_WEB_APP }}
+      #     cluster: ${{ vars.ECS_CLUSTER }}
+      #     wait-for-service-stability: true
 
-      - name: Fill in the new image ID in the Amazon ECS task definition worker
-        id: task-def-worker
-        uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
-        with:
-          task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_WORKER_ARN }}
-          container-name: ${{ vars.WEB_APP_WORKER_CONTAINER_NAME }}
-          image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
+      # - name: Fill in the new image ID in the Amazon ECS task definition worker
+      #   id: task-def-worker
+      #   uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
+      #   with:
+      #     task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_WORKER_ARN }}
+      #     container-name: ${{ vars.WEB_APP_WORKER_CONTAINER_NAME }}
+      #     image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
 
-      - name: Deploy Amazon ECS task definition worker
-        uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
-        with:
-          task-definition: ${{ steps.task-def-worker.outputs.task-definition }}
-          service: ${{ vars.ECS_SERVICE_WEB_APP_WORKER }}
-          cluster: ${{ vars.ECS_CLUSTER }}
-          wait-for-service-stability: true
+      # - name: Deploy Amazon ECS task definition worker
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
+      #   with:
+      #     task-definition: ${{ steps.task-def-worker.outputs.task-definition }}
+      #     service: ${{ vars.ECS_SERVICE_WEB_APP_WORKER }}
+      #     cluster: ${{ vars.ECS_CLUSTER }}
+      #     wait-for-service-stability: true
 
-      - name: Fill in the new image ID in the Amazon ECS task definition scheduler
-        id: task-def-scheduler
-        uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
-        with:
-          task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_SCHEDULER_ARN }}
-          container-name: ${{ vars.WEB_APP_SCHEDULER_CONTAINER_NAME }}
-          image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
+      # - name: Fill in the new image ID in the Amazon ECS task definition scheduler
+      #   id: task-def-scheduler
+      #   uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
+      #   with:
+      #     task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_SCHEDULER_ARN }}
+      #     container-name: ${{ vars.WEB_APP_SCHEDULER_CONTAINER_NAME }}
+      #     image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
 
-      - name: Deploy Amazon ECS task definition scheduler
-        uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
-        with:
-          task-definition: ${{ steps.task-def-scheduler.outputs.task-definition }}
-          service: ${{ vars.ECS_SERVICE_WEB_APP_SCHEDULER }}
-          cluster: ${{ vars.ECS_CLUSTER }}
-          wait-for-service-stability: true
+      # - name: Deploy Amazon ECS task definition scheduler
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
+      #   with:
+      #     task-definition: ${{ steps.task-def-scheduler.outputs.task-definition }}
+      #     service: ${{ vars.ECS_SERVICE_WEB_APP_SCHEDULER }}
+      #     cluster: ${{ vars.ECS_CLUSTER }}
+      #     wait-for-service-stability: true
 
-      - name: Fill in the new image ID in the Amazon ECS task definition runonce-scripts
-        id: task-def-runonce-scripts
-        uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
-        with:
-          task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_RUNONCE_SCRIPTS_ARN }}
-          container-name: ${{ vars.RUNONCE_SCRIPTS_CONTAINER_NAME }}
-          image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
+      # - name: Fill in the new image ID in the Amazon ECS task definition runonce-scripts
+      #   id: task-def-runonce-scripts
+      #   uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
+      #   with:
+      #     task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_RUNONCE_SCRIPTS_ARN }}
+      #     container-name: ${{ vars.RUNONCE_SCRIPTS_CONTAINER_NAME }}
+      #     image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
 
-      - name: Deploy Amazon ECS task definition runonce-scripts
-        uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
-        with:
-          task-definition: ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
-          cluster: ${{ vars.ECS_CLUSTER }}
-          run-task: true
-          run-task-launch-type: EC2
+      # - name: Deploy Amazon ECS task definition runonce-scripts
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
+      #   with:
+      #     task-definition: ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
+      #     cluster: ${{ vars.ECS_CLUSTER }}
+      #     run-task: true
+      #     run-task-launch-type: EC2
