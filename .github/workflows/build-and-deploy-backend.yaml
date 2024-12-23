@@ -68,38 +68,44 @@ jobs:
           container-name: ${{ vars.APPLY_MIGRATIONS_CONTAINER_NAME }}
           image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
 
-      - name: Run ECS Task to Apply Migrations
-        id: run-ecs-task-apply-migrations
+      - name: Register a New ECS Task Definition Revision
+        id: register-task-definition
         run: |
-          TASK_MIGRATIONS_ARN=$(aws ecs run-task \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --launch-type EC2 \
-            --task-definition ${{ steps.task-def-apply-migrations.outputs.task-definition }} \
-            --query 'tasks[0].taskArn' \
-            --output text)
+          aws ecs register-task-definition \
+            --cli-input-json file://${{ steps.task-def-apply-migrations.outputs.task-definition }}
 
-          echo "Started ECS task with ARN: $TASK_MIGRATIONS_ARN"
-          echo "TASK_MIGRATIONS_ARN=$TASK_MIGRATIONS_ARN" >> $GITHUB_ENV
+      # - name: Run ECS Task to Apply Migrations
+      #   id: run-ecs-task-apply-migrations
+      #   run: |
+      #     TASK_MIGRATIONS_ARN=$(aws ecs run-task \
+      #       --cluster ${{ vars.ECS_CLUSTER }} \
+      #       --launch-type EC2 \
+      #       --task-definition ${{ steps.task-def-apply-migrations.outputs.task-definition }} \
+      #       --query 'tasks[0].taskArn' \
+      #       --output text)
 
-      - name: Wait for Task Completion
-        id: wait-for-ecs-task
-        run: |
-          while true; do
-            STATUS=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].lastStatus' --output text)
-            echo "Task status: $STATUS"
-            if [[ "$STATUS" == "STOPPED" ]]; then
-              BREAK_CODE=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].containers[0].exitCode' --output text)
-              echo "Task exit code: $BREAK_CODE"
-              if [[ "$BREAK_CODE" -eq 0 ]]; then
-                echo "Migrations applied successfully!"
-                exit 0
-              else
-                echo "Migrations failed!"
-                exit 1
-              fi
-            fi
-            sleep 10
-          done
+      #     echo "Started ECS task with ARN: $TASK_MIGRATIONS_ARN"
+      #     echo "TASK_MIGRATIONS_ARN=$TASK_MIGRATIONS_ARN" >> $GITHUB_ENV
+
+      # - name: Wait for Task Completion
+      #   id: wait-for-ecs-task
+      #   run: |
+      #     while true; do
+      #       STATUS=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].lastStatus' --output text)
+      #       echo "Task status: $STATUS"
+      #       if [[ "$STATUS" == "STOPPED" ]]; then
+      #         BREAK_CODE=$(aws ecs describe-tasks --cluster ${{ vars.ECS_CLUSTER }} --tasks ${{ env.TASK_MIGRATIONS_ARN }} --query 'tasks[0].containers[0].exitCode' --output text)
+      #         echo "Task exit code: $BREAK_CODE"
+      #         if [[ "$BREAK_CODE" -eq 0 ]]; then
+      #           echo "Migrations applied successfully!"
+      #           exit 0
+      #         else
+      #           echo "Migrations failed!"
+      #           exit 1
+      #         fi
+      #       fi
+      #       sleep 10
+      #     done
 
       # - name: Fill in the new image ID in the Amazon ECS task definition web
       #   id: task-def-web
