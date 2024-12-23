@@ -68,11 +68,61 @@ jobs:
           container-name: ${{ vars.APPLY_MIGRATIONS_CONTAINER_NAME }}
           image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
 
-      - name: Register a New ECS Task Definition Revision
-        id: register-task-definition
+      - name: Deploy Amazon ECS task definition apply-migrations
+        uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
+        with:
+          task-definition: ${{ steps.task-def-apply-migrations.outputs.task-definition }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          run-task: true
+          run-task-launch-type: EC2
+
+      - name: Wait for the Apply Migrations task to complete
+        id: wait-for-ecs-task
         run: |
-          aws ecs register-task-definition \
-            --cli-input-json file://${{ steps.task-def-apply-migrations.outputs.task-definition }}
+          APPLY_MIGRATIONS_TASK_ARN=$(aws ecs list-tasks \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --desired-status RUNNING \
+            --family ${{ vars.ECS_TASK_DEFINITION_APPLY_MIGRATIONS_FAMILY }} \
+            --query 'taskArns[0]' \
+            --output text)
+
+          echo "Started ECS task with ARN: $APPLY_MIGRATIONS_TASK_ARN"
+
+          if [[ -z "$APPLY_MIGRATIONS_TASK_ARN" ]]; then
+            echo "No running task for applying migrations found!"
+            exit 1
+          fi
+
+          echo "Waiting for task: $APPLY_MIGRATIONS_TASK_ARN to complete..."
+
+          while true; do
+            STATUS=$(aws ecs describe-tasks \
+              --cluster ${{ vars.ECS_CLUSTER }} \
+              --tasks $APPLY_MIGRATIONS_TASK_ARN \
+              --query 'tasks[0].lastStatus' \
+              --output text)
+            echo "Task status: $STATUS"
+            if [[ "$STATUS" == "STOPPED" ]]; then
+              BREAK_CODE=$(aws ecs describe-tasks \
+                --cluster ${{ vars.ECS_CLUSTER }} \
+                --tasks $APPLY_MIGRATIONS_TASK_ARN \
+                --query 'tasks[0].containers[0].exitCode' \
+                --output text)
+              echo "Task exit code: $BREAK_CODE"
+              if [[ "$BREAK_CODE" -eq 0 ]]; then
+                echo "Migrations applied successfully!"
+                exit 0
+              else
+                echo "Migrations failed!"
+                exit 1
+              fi
+            fi
+            sleep 10
+          done
+
+      - name: Just the next step for checking
+        run: |
+          echo "NEXT STEP IS RUNNING"
 
       # - name: Run ECS Task to Apply Migrations
       #   id: run-ecs-task-apply-migrations
