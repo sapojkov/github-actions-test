@@ -77,7 +77,7 @@ jobs:
           run-task-launch-type: EC2
 
       - name: Wait for the Apply Migrations task to complete
-        id: wait-for-ecs-task
+        id: wait-for-ecs-task-apply-migrations
         run: |
           APPLY_MIGRATIONS_TASK_ARN=$(aws ecs list-tasks \
             --cluster ${{ vars.ECS_CLUSTER }} \
@@ -86,10 +86,10 @@ jobs:
             --query 'taskArns[0]' \
             --output text)
 
-          echo "Started ECS task with ARN: $APPLY_MIGRATIONS_TASK_ARN"
+          echo "Started ECS apply migrations task with ARN: $APPLY_MIGRATIONS_TASK_ARN"
 
           if [[ -z "$APPLY_MIGRATIONS_TASK_ARN" ]]; then
-            echo "No running task for applying migrations found!"
+            echo "No running tasks found for applying migrations!"
             exit 1
           fi
 
@@ -97,17 +97,19 @@ jobs:
 
           while true; do
             STATUS=$(aws ecs describe-tasks \
-              --cluster ${{ vars.ECS_CLUSTER }} \
-              --tasks $APPLY_MIGRATIONS_TASK_ARN \
-              --query 'tasks[0].lastStatus' \
-              --output text)
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --tasks $APPLY_MIGRATIONS_TASK_ARN \
+            --query 'tasks[0].lastStatus' \
+            --output text)
+
             echo "Task status: $STATUS"
+
             if [[ "$STATUS" == "STOPPED" ]]; then
               BREAK_CODE=$(aws ecs describe-tasks \
-                --cluster ${{ vars.ECS_CLUSTER }} \
-                --tasks $APPLY_MIGRATIONS_TASK_ARN \
-                --query 'tasks[0].containers[0].exitCode' \
-                --output text)
+                  --cluster ${{ vars.ECS_CLUSTER }} \
+                  --tasks $APPLY_MIGRATIONS_TASK_ARN \
+                  --query 'tasks[0].containers[0].exitCode' \
+                  --output text)
               echo "Task exit code: $BREAK_CODE"
               if [[ "$BREAK_CODE" -eq 0 ]]; then
                 echo "Migrations applied successfully!"
@@ -120,9 +122,9 @@ jobs:
             sleep 10
           done
 
-      - name: Just the next step for checking
+      - name: Just the next step for checking applying of migrations
         run: |
-          echo "NEXT STEP IS RUNNING"
+          echo "NEXT STEP IS RUNNING for checking applying of migrations"
 
       # - name: Run ECS Task to Apply Migrations
       #   id: run-ecs-task-apply-migrations
@@ -205,18 +207,68 @@ jobs:
       #     cluster: ${{ vars.ECS_CLUSTER }}
       #     wait-for-service-stability: true
 
-      # - name: Fill in the new image ID in the Amazon ECS task definition runonce-scripts
-      #   id: task-def-runonce-scripts
-      #   uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
-      #   with:
-      #     task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_RUNONCE_SCRIPTS_ARN }}
-      #     container-name: ${{ vars.RUNONCE_SCRIPTS_CONTAINER_NAME }}
-      #     image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
+      - name: Fill in the new image ID in the Amazon ECS task definition runonce-scripts
+        id: task-def-runonce-scripts
+        uses: aws-actions/amazon-ecs-render-task-definition@f0e3859cc4f50aa73ee4a2dc82781f8737bcbffd
+        with:
+          task-definition-arn: ${{ vars.ECS_TASK_DEFINITION_RUNONCE_SCRIPTS_ARN }}
+          container-name: ${{ vars.RUNONCE_SCRIPTS_CONTAINER_NAME }}
+          image: 357844151986.dkr.ecr.us-west-1.amazonaws.com/fondo/backend:0.0.30
 
-      # - name: Deploy Amazon ECS task definition runonce-scripts
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
-      #   with:
-      #     task-definition: ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
-      #     cluster: ${{ vars.ECS_CLUSTER }}
-      #     run-task: true
-      #     run-task-launch-type: EC2
+      - name: Deploy Amazon ECS task definition runonce-scripts
+        uses: aws-actions/amazon-ecs-deploy-task-definition@0f24c175fe8301e38a6ee7e41b3483ca685290ee
+        with:
+          task-definition: ${{ steps.task-def-runonce-scripts.outputs.task-definition }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          run-task: true
+          run-task-launch-type: EC2
+
+      - name: Wait for the Runonce-scripts task to complete
+        id: wait-for-ecs-task-runonce-scripts
+        run: |
+          RUNONCE_SCRIPTS_TASK_ARN=$(aws ecs list-tasks \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --desired-status RUNNING \
+            --family ${{ vars.ECS_TASK_DEFINITION_RUNONCE_SCRIPTS_FAMILY }} \
+            --query 'taskArns[0]' \
+            --output text)
+
+          echo "Started ECS task runonce-scripts with ARN: $RUNONCE_SCRIPTS_TASK_ARN"
+
+          if [[ -z "$RUNONCE_SCRIPTS_TASK_ARN" ]]; then
+            echo "No running tasks found for runonce-scripts!"
+            exit 1
+          fi
+
+          echo "Waiting for task: $RUNONCE_SCRIPTS_TASK_ARN to complete..."
+
+          while true; do
+            STATUS=$(aws ecs describe-tasks \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --tasks $RUNONCE_SCRIPTS_TASK_ARN \
+            --query 'tasks[0].lastStatus' \
+            --output text)
+
+            echo "Task status: $STATUS"
+
+            if [[ "$STATUS" == "STOPPED" ]]; then
+              BREAK_CODE=$(aws ecs describe-tasks \
+                --cluster ${{ vars.ECS_CLUSTER }} \
+                --tasks $RUNONCE_SCRIPTS_TASK_ARN \
+                --query 'tasks[0].containers[0].exitCode' \
+                --output text)
+              echo "Task exit code: $BREAK_CODE"
+              if [[ "$BREAK_CODE" -eq 0 ]]; then
+                echo "Runonce scripts executed successfully!"
+                exit 0
+              else
+                echo "Runonce scripts failed!"
+                exit 1
+              fi
+            fi
+            sleep 10
+          done
+
+      - name: Just the next step for checking
+        run: |
+          echo "NEXT STEP IS RUNNING for checking of runonce scripts completion"
